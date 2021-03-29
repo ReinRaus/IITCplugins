@@ -1,8 +1,8 @@
 // ==UserScript==
 // @id             iitc-plugin-betterclick@jonatkins
-// @name           IITC plugin: BetterClick v 1.0.0
+// @name           IITC plugin: BetterClick v 1.0.1
 // @author         ReinRaus
-// @version        1.0.0
+// @version        1.0.1
 // @category       Controls
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @updateURL      https://github.com/ReinRaus/IITCplugins/raw/main/betterClick.user.js
@@ -25,7 +25,7 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
 plugin_info.buildName = 'iitc-betterClick';
-plugin_info.dateTimeVersion = '20210312';
+plugin_info.dateTimeVersion = '20210330';
 plugin_info.pluginId = 'betterClick';
 //END PLUGIN AUTHORS NOTE
 
@@ -72,6 +72,7 @@ var css = `
     color: black;
     background: white;
     display: inline-block;
+    cursor: pointer;
 }
 
 #boxBetterClick td.list > div > div {
@@ -103,7 +104,10 @@ clacc.start = function() {
     menuBox.innerHTML = "<TR><TD></TD><TD></TD><TD></TD></TR><TR><TD></TD><TD class='list'></TD><TD></TD></TR>";
     document.body.appendChild( menuBox );
     clacc.injectCSS( css );
-    $( menuBox ).on( "click", ()=> menuBox.style.visibility = "hidden" );
+    $( menuBox ).on( "click", (event)=> {
+        menuBox.style.visibility = "hidden";
+        event.originalEvent.stopPropagation();
+    } );
     map.on( "click", (event)=>{
         var range = Math.min( map._container.clientHeight, map._container.clientWidth) / 15;
         var targetPortals = [];
