@@ -1,8 +1,8 @@
 // ==UserScript==
 // @id             iitc-plugin-betterclick@jonatkins
-// @name           IITC plugin: BetterClick v 1.0.2
+// @name           IITC plugin: BetterClick
 // @author         ReinRaus
-// @version        1.0.2
+// @version        1.0.3
 // @category       Controls
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @updateURL      https://github.com/ReinRaus/IITCplugins/raw/main/betterClick.user.js
