@@ -1,8 +1,8 @@
 // ==UserScript==
 // @id             iitc-plugin-betterclick@jonatkins
-// @name           IITC plugin: BetterClick v 1.0.1
+// @name           IITC plugin: BetterClick v 1.0.2
 // @author         ReinRaus
-// @version        1.0.1
+// @version        1.0.2
 // @category       Controls
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @updateURL      https://github.com/ReinRaus/IITCplugins/raw/main/betterClick.user.js
@@ -97,6 +97,10 @@ clacc.distance = function( point1, point2 ) {
     return Math.sqrt( Math.pow( point1.x - point2.x, 2 ) + Math.pow( point1.y - point2.y, 2 ) );
 };
 
+clacc.getRange = function() {
+    return Math.min( map._container.clientHeight, map._container.clientWidth) / 15;
+};
+
 clacc.start = function() {
 
     var menuBox = document.createElement( "table" );
@@ -109,10 +113,9 @@ clacc.start = function() {
         event.originalEvent.stopPropagation();
     } );
     map.on( "click", (event)=>{
-        var range = Math.min( map._container.clientHeight, map._container.clientWidth) / 15;
+        var range = clacc.getRange();
         var targetPortals = [];
         for ( let i in map._layers ) {
-
             if ( map._layers[i].options && map._layers[i].options.data && map._layers[i].options.data.title && clacc.distance( event.layerPoint, map._layers[i]._point) < range ) {
                 targetPortals.push( {
                     title:  map._layers[i].options.data.title,
