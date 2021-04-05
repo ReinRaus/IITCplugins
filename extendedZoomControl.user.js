@@ -2,7 +2,7 @@
 // @id             iitc-plugin-extendedzoomcontrol@jonatkins
 // @name           IITC plugin: Extended zoom control
 // @author         ReinRaus
-// @version        1.0.0
+// @version        1.0.1
 // @category       Controls
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @updateURL      https://github.com/ReinRaus/IITCplugins/raw/main/extendedZoomControl.user.js
@@ -23,7 +23,7 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
 plugin_info.buildName = 'release';
-plugin_info.dateTimeVersion = '2021-03-16-000000';
+plugin_info.dateTimeVersion = '2021-04-05-000000';
 plugin_info.pluginId = 'extZoom-control';
 //END PLUGIN AUTHORS NOTE
 
@@ -49,8 +49,10 @@ extZoomControl.options = {
     set bodyValue( val ) {
         this.realBodyValue = val;
         localStorage[ "plugin-" + plugin_info.pluginId ] = val;
-        //document.body.style.zoom = val + "%";
-        viewport.setAttribute('content', `width=device-width, initial-scale=${val/100}, user-scalable=yes` );
+        map._container.style.transform = `scale(${val/100})`;
+        var WH = 10000/val + "%";
+        map._container.style.width = WH;
+        map._container.style.height = WH;
         zoomSwith.render();
         map.invalidateSize();
         return val;
@@ -92,15 +94,9 @@ function setup () {
         };
     };
 
-    viewport = document.querySelector("meta[name=viewport]");
-    if (!viewport){
-        viewport=document.createElement('meta');
-        viewport.name = "viewport";
-        document.getElementsByTagName('head')[0].appendChild(viewport);
-    }
-
+    map._container.style.transformOrigin = "top left";
     map.on( "zoomend", zoomSwith.render );
-    map.once( "zoomend", function() {
+    map.once( "zoomstart", function() {
         extZoomControl.options.bodyValue = bodyDefaultValue;
     } );
     map.zoomControl._container.appendChild( zoomSwith );
@@ -131,3 +127,4 @@ var info = {};
 if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
 script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
 (document.body || document.head || document.documentElement).appendChild(script);
+
