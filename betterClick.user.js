@@ -2,7 +2,7 @@
 // @id             iitc-plugin-betterclick@jonatkins
 // @name           IITC plugin: BetterClick
 // @author         ReinRaus
-// @version        1.0.3
+// @version        1.0.4
 // @category       Controls
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @updateURL      https://github.com/ReinRaus/IITCplugins/raw/main/betterClick.user.js
@@ -34,6 +34,23 @@ plugin_info.pluginId = 'betterClick';
 window.plugin[plugin_info.pluginId] = function() {};
 var clacc = window.plugin[plugin_info.pluginId];
 
+clacc.options = {
+    _realRadius: 7, // percents from screen width
+    set radius( val ) {
+        let temp = parseInt( val );
+        if ( temp < 1 ) temp = 1;
+        if ( temp > 100 ) temp = 100;
+        if ( isNaN( temp ) ) temp = this._realRadius; // default or old
+        this._realRadius = temp;
+        localStorage[ "plugin-" + plugin_info.pluginId ] = temp;
+        return temp;
+    },
+    get radius() {
+        return this._realRadius;
+    }
+};
+clacc.options.radius = parseInt( localStorage[ "plugin-" + plugin_info.pluginId ] );
+
 clacc.injectCSS = function (str) {
     var sheet = document.createElement('style')
     sheet.innerHTML = str;
@@ -60,30 +77,33 @@ var css = `
 #boxBetterClick tr.nth-child(2) {
     height: 85%;
 }
+#boxBetterClick div.settings span.counter {
+    display: none;
+}
+#boxBetterClick div.settings span.toogle {
+    cursor: pointer;
+    color: blue;
+}
 #boxBetterClick td.list {
     vertical-align: middle;
 }
 #boxBetterClick td.list * {
     vertical-align: middle;
 }
-
-#boxBetterClick td.list > div {
+#boxBetterClick div.list > div {
     text-align: left;
     color: black;
     background: white;
     display: inline-block;
     cursor: pointer;
 }
-
-#boxBetterClick td.list > div > div {
+#boxBetterClick div.list > div > div{
     padding: 0.5vmin;
     margin: 0.2vmin;
 }
-
-#boxBetterClick td.list > div > div:hover {
+#boxBetterClick div.list > div > div:hover {
     background: silver;
 }
-
 #boxBetterClick span.circle {
     width: 5vmin;
     height: 5vmin;
@@ -98,14 +118,28 @@ clacc.distance = function( point1, point2 ) {
 };
 
 clacc.getRange = function() {
-    return Math.min( map._container.clientHeight, map._container.clientWidth) / 15;
+    return Math.min( map._container.clientHeight, map._container.clientWidth) * clacc.options.radius / 100;
 };
 
 clacc.start = function() {
 
     var menuBox = document.createElement( "table" );
     menuBox.id = "boxBetterClick";
-    menuBox.innerHTML = "<TR><TD></TD><TD></TD><TD></TD></TR><TR><TD></TD><TD class='list'></TD><TD></TD></TR>";
+    menuBox.innerHTML = `
+    <TR><TD></TD><TD></TD><TD></TD></TR>
+    <TR><TD></TD>
+      <TD class='list'>
+        <DIV class='settings'>
+          <SPAN class='counter'>
+            <BUTTON class='minus'>-</BUTTON>
+            <SPAN class='radius'>${clacc.options.radius}</SPAN>%
+            <BUTTON class='plus'>+</BUTTON>
+          </SPAN>
+          <SPAN class='toogle'>⚙</SPAN>
+        </DIV>
+        <DIV class='list'></DIV>
+      </TD>
+    <TD></TD></TR>`;
     document.body.appendChild( menuBox );
     clacc.injectCSS( css );
     $( menuBox ).on( "click", (event)=> {
@@ -133,12 +167,31 @@ clacc.start = function() {
                                    ${data.title}
                                </DIV>`;
             };
-            $( "#boxBetterClick td.list" ).html( html + "</DIV>" );
-            $( "#boxBetterClick td.list div > div" ).on( "click", (ev)=>{
+            $( "#boxBetterClick div.list" ).html( html + "</DIV>" );
+            menuBox.style.visibility = "visible";
+
+            $( "#boxBetterClick div.list > div > div" ).on( "click", (ev)=>{
                     selectPortal( ev.currentTarget.dataset.guid );
                     renderPortalDetails( ev.currentTarget.dataset.guid );
                 } );
-            menuBox.style.visibility = "visible";
+
+            $( "#boxBetterClick div.settings span.toogle" ).on( "click", (ev)=>{
+                    ev.originalEvent.stopPropagation();
+                    let target = $( "#boxBetterClick div.settings span.counter" )
+                    let current = target.css( "display" );
+                    target.css( "display", current == 'none' ? 'inline' : 'none' );
+                } );
+
+            $( "#boxBetterClick div.settings button" ).on( "click", (ev)=>{
+                    ev.originalEvent.stopPropagation();
+                    if ( ev.target.className == 'minus' ) {
+                        clacc.options.radius--;
+                    } else if ( ev.target.className == 'plus' ) {
+                        clacc.options.radius++;
+                    };
+                    $( "#boxBetterClick div.settings span.radius" ).html( clacc.options.radius );
+                } );
+
         };
     } );
 };
