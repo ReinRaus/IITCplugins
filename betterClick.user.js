@@ -142,10 +142,29 @@ clacc.start = function() {
     <TD></TD></TR>`;
     document.body.appendChild( menuBox );
     clacc.injectCSS( css );
+
     $( menuBox ).on( "click", (event)=> {
         menuBox.style.visibility = "hidden";
         event.originalEvent.stopPropagation();
     } );
+
+    $( "#boxBetterClick div.settings span.toogle" ).on( "click", (ev)=>{
+        ev.originalEvent.stopPropagation();
+        let target = $( "#boxBetterClick div.settings span.counter" )
+        let current = target.css( "display" );
+        target.css( "display", current == 'none' ? 'inline' : 'none' );
+    } );
+
+    $( "#boxBetterClick div.settings button" ).on( "click", (ev)=>{
+        ev.originalEvent.stopPropagation();
+        if ( ev.target.className == 'minus' ) {
+            clacc.options.radius--;
+        } else if ( ev.target.className == 'plus' ) {
+            clacc.options.radius++;
+        };
+        $( "#boxBetterClick div.settings span.radius" ).html( clacc.options.radius );
+    } );
+
     map.on( "click", (event)=>{
         var range = clacc.getRange();
         var targetPortals = [];
@@ -174,24 +193,6 @@ clacc.start = function() {
                     selectPortal( ev.currentTarget.dataset.guid );
                     renderPortalDetails( ev.currentTarget.dataset.guid );
                 } );
-
-            $( "#boxBetterClick div.settings span.toogle" ).on( "click", (ev)=>{
-                    ev.originalEvent.stopPropagation();
-                    let target = $( "#boxBetterClick div.settings span.counter" )
-                    let current = target.css( "display" );
-                    target.css( "display", current == 'none' ? 'inline' : 'none' );
-                } );
-
-            $( "#boxBetterClick div.settings button" ).on( "click", (ev)=>{
-                    ev.originalEvent.stopPropagation();
-                    if ( ev.target.className == 'minus' ) {
-                        clacc.options.radius--;
-                    } else if ( ev.target.className == 'plus' ) {
-                        clacc.options.radius++;
-                    };
-                    $( "#boxBetterClick div.settings span.radius" ).html( clacc.options.radius );
-                } );
-
         };
     } );
 };
