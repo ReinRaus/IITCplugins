@@ -2,7 +2,7 @@
 // @id             iitc-plugin-betterclick@jonatkins
 // @name           IITC plugin: BetterClick
 // @author         ReinRaus
-// @version        1.0.4
+// @version        1.0.5
 // @category       Controls
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @updateURL      https://github.com/ReinRaus/IITCplugins/raw/main/betterClick.user.js
@@ -111,6 +111,16 @@ var css = `
     background-color: red;
     display: inline-block;
 }
+#boxBetterClick div.circle {
+    position: absolute;
+    border: 2px solid red;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events:none;
+    display: none;
+}
 `;
 
 clacc.distance = function( point1, point2 ) {
@@ -126,7 +136,7 @@ clacc.start = function() {
     var menuBox = document.createElement( "table" );
     menuBox.id = "boxBetterClick";
     menuBox.innerHTML = `
-    <TR><TD></TD><TD></TD><TD></TD></TR>
+    <TR><TD></TD><TD><DIV class='circle'></DIV></TD><TD></TD></TR>
     <TR><TD></TD>
       <TD class='list'>
         <DIV class='settings'>
@@ -143,6 +153,10 @@ clacc.start = function() {
     document.body.appendChild( menuBox );
     clacc.injectCSS( css );
 
+    let updateCircle = function() {
+        $( "#boxBetterClick div.circle" ).css( "width", clacc.getRange() + "px" ).css( "height", clacc.getRange() + "px" );
+    };
+
     $( menuBox ).on( "click", (event)=> {
         menuBox.style.visibility = "hidden";
         event.originalEvent.stopPropagation();
@@ -153,6 +167,8 @@ clacc.start = function() {
         let target = $( "#boxBetterClick div.settings span.counter" )
         let current = target.css( "display" );
         target.css( "display", current == 'none' ? 'inline' : 'none' );
+        $( "#boxBetterClick div.circle" ).css( "display", current == 'none' ? 'inline' : 'none' );
+        updateCircle();
     } );
 
     $( "#boxBetterClick div.settings button" ).on( "click", (ev)=>{
@@ -163,6 +179,7 @@ clacc.start = function() {
             clacc.options.radius++;
         };
         $( "#boxBetterClick div.settings span.radius" ).html( clacc.options.radius );
+        updateCircle();
     } );
 
     map.on( "click", (event)=>{
