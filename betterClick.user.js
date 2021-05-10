@@ -2,7 +2,7 @@
 // @id             iitc-plugin-betterclick@jonatkins
 // @name           IITC plugin: BetterClick
 // @author         ReinRaus
-// @version        1.0.5
+// @version        1.1.0
 // @category       Controls
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @updateURL      https://github.com/ReinRaus/IITCplugins/raw/main/betterClick.user.js
@@ -24,32 +24,35 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
-plugin_info.buildName = 'iitc-betterClick';
-plugin_info.dateTimeVersion = '20210330';
 plugin_info.pluginId = 'betterClick';
+plugin_info.title = "BetterClick";
+plugin_info.description = {
+    en: "Show list of portal if you miss.",
+    ru: "Если Вы промахнулись по порталу и попали в карту, то в списке ближайших к месту нажатия порталов можно выбрать желаемый портал."
+};
+
+let settings = {radius:8}; // если плагин USettings не установлен
+let settings_info = {
+    radius: {
+        type: "string",
+        default: "8",
+        format: "integer(1,100)",
+        title: {
+            en: "Miss radius",
+            ru: "Радиус промаха"
+        },
+        description: {
+            en: "Miss radius in percents of screen size.",
+            ru: "Радиус в котором будет сформирован список порталов в процентах от размера экрана."
+        },
+    }
+};
 //END PLUGIN AUTHORS NOTE
 
 // PLUGIN START ////////////////////////////////////////////////////////
 // use own namespace for plugin
 window.plugin[plugin_info.pluginId] = function() {};
 var clacc = window.plugin[plugin_info.pluginId];
-
-clacc.options = {
-    _realRadius: 7, // percents from screen width
-    set radius( val ) {
-        let temp = parseInt( val );
-        if ( temp < 1 ) temp = 1;
-        if ( temp > 100 ) temp = 100;
-        if ( isNaN( temp ) ) temp = this._realRadius; // default or old
-        this._realRadius = temp;
-        localStorage[ "plugin-" + plugin_info.pluginId ] = temp;
-        return temp;
-    },
-    get radius() {
-        return this._realRadius;
-    }
-};
-clacc.options.radius = parseInt( localStorage[ "plugin-" + plugin_info.pluginId ] );
 
 clacc.injectCSS = function (str) {
     var sheet = document.createElement('style')
@@ -77,13 +80,6 @@ var css = `
 #boxBetterClick tr.nth-child(2) {
     height: 85%;
 }
-#boxBetterClick div.settings span.counter {
-    display: none;
-}
-#boxBetterClick div.settings span.toogle {
-    cursor: pointer;
-    color: blue;
-}
 #boxBetterClick td.list {
     vertical-align: middle;
 }
@@ -97,7 +93,7 @@ var css = `
     display: inline-block;
     cursor: pointer;
 }
-#boxBetterClick div.list > div > div{
+#boxBetterClick div.list > div > div {
     padding: 0.5vmin;
     margin: 0.2vmin;
 }
@@ -111,16 +107,6 @@ var css = `
     background-color: red;
     display: inline-block;
 }
-#boxBetterClick div.circle {
-    position: absolute;
-    border: 2px solid red;
-    border-radius: 50%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events:none;
-    display: none;
-}
 `;
 
 clacc.distance = function( point1, point2 ) {
@@ -128,58 +114,30 @@ clacc.distance = function( point1, point2 ) {
 };
 
 clacc.getRange = function() {
-    return Math.min( map._container.clientHeight, map._container.clientWidth) * clacc.options.radius / 100;
+    return Math.min( map._container.clientHeight, map._container.clientWidth) * parseInt( settings.radius ) / 100;
 };
 
 clacc.start = function() {
-
+    if ( window.USettings ) {
+        settings = ( new window.USettings( plugin_info, settings_info ) ).settings;
+    } else {
+        console.warn( "Please install USettings plugin." );
+    };
     var menuBox = document.createElement( "table" );
     menuBox.id = "boxBetterClick";
     menuBox.innerHTML = `
     <TR><TD></TD><TD><DIV class='circle'></DIV></TD><TD></TD></TR>
     <TR><TD></TD>
       <TD class='list'>
-        <DIV class='settings'>
-          <SPAN class='counter'>
-            <BUTTON class='minus'>-</BUTTON>
-            <SPAN class='radius'>${clacc.options.radius}</SPAN>%
-            <BUTTON class='plus'>+</BUTTON>
-          </SPAN>
-          <SPAN class='toogle'>⚙</SPAN>
-        </DIV>
         <DIV class='list'></DIV>
       </TD>
     <TD></TD></TR>`;
     document.body.appendChild( menuBox );
     clacc.injectCSS( css );
 
-    let updateCircle = function() {
-        $( "#boxBetterClick div.circle" ).css( "width", clacc.getRange() + "px" ).css( "height", clacc.getRange() + "px" );
-    };
-
     $( menuBox ).on( "click", (event)=> {
         menuBox.style.visibility = "hidden";
         event.originalEvent.stopPropagation();
-    } );
-
-    $( "#boxBetterClick div.settings span.toogle" ).on( "click", (ev)=>{
-        ev.originalEvent.stopPropagation();
-        let target = $( "#boxBetterClick div.settings span.counter" )
-        let current = target.css( "display" );
-        target.css( "display", current == 'none' ? 'inline' : 'none' );
-        $( "#boxBetterClick div.circle" ).css( "display", current == 'none' ? 'inline' : 'none' );
-        updateCircle();
-    } );
-
-    $( "#boxBetterClick div.settings button" ).on( "click", (ev)=>{
-        ev.originalEvent.stopPropagation();
-        if ( ev.target.className == 'minus' ) {
-            clacc.options.radius--;
-        } else if ( ev.target.className == 'plus' ) {
-            clacc.options.radius++;
-        };
-        $( "#boxBetterClick div.settings span.radius" ).html( clacc.options.radius );
-        updateCircle();
     } );
 
     map.on( "click", (event)=>{
