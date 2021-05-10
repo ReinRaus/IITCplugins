@@ -533,7 +533,7 @@ plugin.start = function() {
           color: blue;
         }
         div.usettings-box .usettings-container {
-          display: block;
+          display: none;
           width: 90vw;
           height: 90vh;
           top: 50%;
