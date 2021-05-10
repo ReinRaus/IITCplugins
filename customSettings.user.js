@@ -2,7 +2,7 @@
 // @id             iitc-plugin-customsettings@jonatkins
 // @name           IITC plugin: Custom Settings
 // @author         ReinRaus
-// @version        1.0.0
+// @version        1.0.1
 // @category       Controls
 // @namespace      https://github.com/jonatkins/ingress-intel-total-conversion
 // @updateURL      https://github.com/ReinRaus/IITCplugins/raw/main/customSettings.user.js
@@ -79,6 +79,12 @@ plugin.replaceLanguage = function() {
     for ( let i in plugin.allUnits ) {
         plugin.allUnits[i].renderAll();
     };
+};
+// внедрение CSS на страницу
+plugin.injectCSS = function (str) {
+    var node = document.createElement('style');
+    node.innerHTML = str;
+    document.body.appendChild(node);
 };
 // PLUGIN START ////////////////////////////////////////////////////////
 // use own namespace for plugin
@@ -196,7 +202,7 @@ window.USettings = class {
         `;
         let settingBlock = this.container.querySelector( ".settings" );
         this.container.querySelectorAll( ".title" )[1].addEventListener( "click", function( ev ) {
-            $( settingBlock ).slideToggle( 400 );
+            $( settingBlock ).slideToggle( 300 ); // TODO: избавиться от jQuery
         } );
         for ( let i in this.settingsInfo ) {
             if ( this.settingsInfo[i].render ) {
@@ -289,9 +295,9 @@ let selfSettings = {
             if ( /^[a-z]{2}$/i.test( value ) ) return value.toLowerCase();
         },
         onSet: function( oldValue, newValue ) {
-            if ( oldValue !== newValue ) {
+            if ( oldValue !== newValue && ( newValue in this.current.settingsInfo[ this.name ].values ) ) { // onSet в замыкании, this изменен
                 plugin.locales[0] = newValue;
-                window.setTimeout( plugin.replaceLanguage, 1000); // чтобы анимации закончились
+                window.setTimeout( plugin.replaceLanguage, 500); // чтобы закончить всё, что есть в этом потоке
             };
         },
         values: {
@@ -394,11 +400,11 @@ plugin.standartRenders = {
                 current.settings[settingName] = ev.target.dataset.value;
                 textarea.style.backgroundColor = current.settings[settingName] !== ev.target.dataset.value ? "red" : "";
                 textarea.value = ev.target.dataset.value;
-                $( 'div.autocomplete div.items' ).slideToggle( 300 );
+                DOMtarget.querySelector( 'div.items' ).classList.toggle( 'animShow' );
             }
         } );
         DOMtarget.querySelector( '.arrow' ).addEventListener( 'click', (ev)=> {
-            $( 'div.autocomplete div.items' ).slideToggle( 300 );
+            DOMtarget.querySelector( 'div.items' ).classList.toggle( 'animShow' );
         } );
         textarea.addEventListener( "keyup", (ev) => {
             let val = ev.target.value.toLowerCase();
@@ -424,13 +430,22 @@ plugin.standartRenders = {
         plugin.standartRenders.list( DOMtarget, current, settingName ); // создали разметку за счёт list, почти одно и то же
         let container = current.settingsInfo[settingName].container;
         DOMtarget.addEventListener( 'click', (ev)=> {
-            if ( ev.target.className == "selected" && ev.target.nodeName == 'DIV' ) {
-                container.querySelector( 'input.selected' ).style.display = 'block';
-                container.querySelector( 'div.selected' ).style.display = 'none';
+            let setDisplay = function( input, div ) {
+                container.querySelector( 'input.selected' ).style.display = input;
+                container.querySelector( 'div.selected' ).style.display = div;
             };
-            if ( ev.target.className == "item" ) {
-                container.querySelector( 'input.selected' ).style.display = 'none';
-                container.querySelector( 'div.selected' ).style.display = 'block';
+            if ( ev.target.classList.contains( "selected" ) && ev.target.nodeName == 'DIV' ) setDisplay( 'block', 'none' );
+            if ( ev.target.classList.contains( "item" ) ) setDisplay( 'none', 'block' );
+            if ( ev.target.classList.contains( "arrow" ) ) {
+                let input = container.querySelector( "input" );
+                if ( input.style.display == "block" ) {
+                    let matched = DOMtarget.querySelector( `div.item[data-value='${input.value}']` );
+                    if ( matched && !container.querySelector( 'div.items' ).classList.contains( 'animShow' )) {
+                        container.querySelector( 'div.selected' ).dataset.value = matched.dataset.value;
+                        container.querySelector( 'div.selected' ).innerHTML = matched.innerHTML;
+                        setDisplay( 'none', 'block' );
+                    };
+                };
             };
         } );
     },
@@ -490,7 +505,7 @@ plugin.standartFormats = {
 };
 
 plugin.start = function() {
-    $( 'head' ).append( `<style type="text/css">
+    plugin.injectCSS( `
         @font-face {
           font-family: 'Noto Color Emoji';
           src: url(https://gitcdn.xyz/repo/googlefonts/noto-emoji/master/fonts/NotoColorEmoji.ttf);
@@ -607,11 +622,15 @@ plugin.start = function() {
         }
         div.usettings-box .autocomplete .items {
           position: absolute;
-          display: none;
           width: 100%;
-          max-height: 6em;
+          max-height: 0em;
+          transition: 0.3s max-height 0s;
           overflow-y: auto;
           overflow-x: hidden;
+        }
+        div.usettings-box .autocomplete .animShow {
+          max-height: 6em;
+          transition: 0.3s max-height 0s;
         }
         div.usettings-box .autocomplete .item {
           margin-right: 2em;
@@ -645,7 +664,7 @@ plugin.start = function() {
         div.usettings-box div.counter input {
           flex: 1;
         }
-        </style>` );
+        ` );
 
     let thisSettings = new window.USettings( plugin_info, selfSettings );
 
