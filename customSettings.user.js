@@ -521,19 +521,19 @@ plugin.start = function() {
           cursor: pointer;
         }
         div.usettings-box {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0px;
-            left: 0px;
-            z-index: 10000;
-            background: #c0c0c060;
+          display: none;
+          width: 100%;
+          height: 100%;
+          position: absolute;
+          top: 0px;
+          left: 0px;
+          z-index: 10000;
+          background: #c0c0c060;
         }
         div.usettings-box a {
           color: blue;
         }
         div.usettings-box .usettings-container {
-          display: none;
           width: 90vw;
           height: 90vh;
           top: 50%;
